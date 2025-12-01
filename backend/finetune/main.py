@@ -300,7 +300,7 @@ def eval(
 
     report_filename = os.path.join(report_dir, f'report_{utils.get_now()}.json')
     with open(report_filename, 'w') as report_file:
-        json.dump(reports, report_file, indent=4)
+        json.dump(reports, report_file, indent=4, ensure_ascii=False)
     
     click.echo(f"Report was exported to {report_filename}")
 

@@ -9,45 +9,32 @@ def setup_hf(hf_token: str):
 
 
 def create_conversation(sample):
-    user_prompt = """
-    You are an expert prompt analyst.
-    
-    Your task is to extract the structural components of the user’s prompt.  
-    Break the prompt into exactly **7 components**, following the definitions below:
-    
-    1. role — The role or persona the user wants the model to adopt.  
-    2. task — The main action or objective the user wants the model to perform.  
-    3. context — Background information or situational details that help explain *why* or *in what situation* the task is performed.  
-    4. input — The data, text, code, or content that the user wants the model to operate on directly.  
-    5. output_requirements — Requirements about the format, style, structure, tone, or constraints on the output.  
-    6. constraints — Rules or limitations the model must follow.  
-    7. example — Any example provided by the user that illustrates the expected output.
-    
-    ### IMPORTANT RULES
-    - If a component is *not explicitly present*, set its value to `"none"`.  
-    - Do NOT hallucinate. Only extract what is truly there.  
-    - Follow the JSON schema below exactly. No extra fields.  
-    - Output must be **valid JSON**, no explanation, no comments.
-    
-    ### JSON Schema
-    {
-      "role": "string or 'none'",
-      "task": "string or 'none'",
-      "context": "string or 'none'",
-      "input": "string or 'none'",
-      "output_requirements": "string or 'none'",
-      "constraints": "string or 'none'",
-      "example": "string or 'none'"
-    }
-    
-    ### USER PROMPT TO ANALYZE
-    %s
-    """ % sample['prompt']
+    system_prompt = """
+You are an expert prompt analyst.
+Your task is to extract the structural components of the user’s prompt.  
+Break the prompt into exactly **7 components**, following the definitions below:
+
+1. role — The role or persona the user wants the model to adopt.  
+2. task — The main action or objective the user wants the model to perform.  
+3. context — Background information or situational details that help explain *why* or *in what situation* the task is performed.  
+4. input — The data, text, code, or content that the user wants the model to operate on directly.  
+5. output_requirements — Requirements about the format, style, structure, tone, or constraints on the output.  
+6. constraints — Rules or limitations the model must follow.  
+7. example — Any example provided by the user that illustrates the expected output.
+
+### IMPORTANT RULES
+- If a component is *not explicitly present*, set its value to `"none"`.  
+- Do NOT hallucinate. Only extract what is truly there.  
+- Follow the JSON schema below exactly. No extra fields.  
+- Output must be **valid JSON**, no explanation, no comments.
+    """
+    user_prompt = f"<user_prompt>{sample['prompt'] }</user_prompt>"
     
     return {
       "messages": [
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
-        {"role": "assistant", "content": json.dumps(sample['label'])}
+        {"role": "assistant", "content": json.dumps(sample['label'], ensure_ascii=False)}
       ]
     }
 
@@ -59,7 +46,7 @@ def load_data():
             for line in jsonl.readlines():
                 try:
                     item = json.loads(line)
-                    item['completion'] = json.dumps(item['label'])
+                    item['completion'] = json.dumps(item['label'], ensure_ascii=False)
                     yield item
                 except Exception:
                     continue
