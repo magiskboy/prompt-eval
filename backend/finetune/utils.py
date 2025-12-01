@@ -58,7 +58,9 @@ def load_data():
         with open('./finetune/data.jsonl', 'r') as jsonl:
             for line in jsonl.readlines():
                 try:
-                    yield json.loads(line)
+                    item = json.loads(line)
+                    item['completion'] = json.dumps(item['label'])
+                    yield item
                 except Exception:
                     continue
 
