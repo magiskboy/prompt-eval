@@ -1,0 +1,5 @@
+{
+  "name": "EvalMetrics Viewer",
+  "description": "A comprehensive dashboard to visualize and compare Human vs. LLM evaluation metrics for prompt engineering.",
+  "requestFramePermissions": []
+}

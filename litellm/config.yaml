@@ -1,0 +1,16 @@
+general_settings:
+  store_model_in_db: true
+  store_prompts_in_spend_logs: true
+
+litellm_settings:
+  callbacks: hook.send_to_evaluator
+
+model_list:
+  - model_name: openai/gpt-oss-20b
+    litellm_params:
+      model: openai/openai/gpt-oss-20b
+      api_base: https://netmind.viettel.vn/codev
+      api_key: sk-mTfDAbSCr6zmxc2otcKEuw
+      input_cost_per_token: 0.0000001
+      output_cost_per_token: 0.0000001
+

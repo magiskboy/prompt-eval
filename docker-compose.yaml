@@ -1,0 +1,97 @@
+services:
+  web:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      BACKEND_BASE_URL: http://localhost:8000
+    networks:
+      - "zen8labs"
+
+  api:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_URL: "redis://redis:6379/1"
+    networks:
+      - "zen8labs"
+    volumes:
+      - ./data/evaluator:/data
+
+  worker:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./backend
+    command:
+      - python 
+      - evaluator/worker.py
+    environment:
+      REDIS_URL: "redis://redis:6379/1"
+      LITELLM_PROXY_API_BASE: ${LITELLM_PROXY_API_BASE:-https://netmind.viettel.vn/codev}
+      LITELLM_PROXY_API_KEY: ${LITELLM_PROXY_API_KEY}
+    networks:
+      - "zen8labs"
+    volumes:
+      - ./data/evaluator:/data
+
+  redis:
+    image: redis/redis-stack
+    ports:
+      - "8001:8001"
+      - "6379:6379"
+    networks:
+      - "zen8labs"
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-stable
+    volumes:
+     - ./litellm:/config
+    command:
+     - "--config=/config/config.yaml"
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: "postgresql://llmproxy:dbpassword9090@db:5432/litellm"
+      STORE_MODEL_IN_DB: "True"
+      LITELLM_MASTER_KEY: "sk-1234"
+      LITELLM_SALT_KEY: "sk-1234"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - db
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 http://localhost:4000/health/liveliness || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - "zen8labs"
+
+  db:
+    image: postgres:16
+    restart: always
+    container_name: litellm_db
+    environment:
+      POSTGRES_DB: litellm
+      POSTGRES_USER: llmproxy
+      POSTGRES_PASSWORD: dbpassword9090
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/litellm_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d litellm -U llmproxy"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    networks:
+      - "zen8labs"
+
+networks:
+  zen8labs:
